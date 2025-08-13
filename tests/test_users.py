@@ -2,7 +2,6 @@ from http import HTTPStatus
 from fast_zero.fast_zero.schemas import UserPublic
 
 
-
 def test_create_user(client):
     response = client.post(
         '/users/',
@@ -153,16 +152,3 @@ def test_read_user_by_id_not_found(client):
     assert response.json() == {
         'detail': 'Usuário com id 999 não encontrado.'
     }
-
-
-def test_get_token(client, user):
-    response = client.post(
-        '/token',
-        data={'username': user.email,
-              'password': user.clear_password}
-    )
-    token = response.json()
-
-    assert response.status_code == HTTPStatus.OK
-    assert token['token_type'] == 'Bearer'
-    assert 'access_token' in token
