@@ -8,23 +8,24 @@ from fastapi import Depends, HTTPException, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import create_engine, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.fast_zero.security import verify_password, create_access_token
 from fast_zero.tests.conftest import session
+from fast_zero.fast_zero.schemas import Token
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
-Session = Annotated[Session, Depends(get_session)]
+Session = Annotated[AsyncSession, Depends(get_session)]
 OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
 
 database = []
 engine = create_engine(Settings().DATABASE_URL)
 
 
-@router.post('/token')
-def login_for_access_token(form_data: OAuth2Form, session: Session):
-    user = session.scalar(select(User).where(User.email == form_data.email))
+@router.post('/token', response_model=Token)
+async def login_for_access_token(form_data: OAuth2Form, session: Session):
+    user = await session.scalar(select(User).where(User.email == form_data.email))
 
     if not user:
         raise HTTPException(
