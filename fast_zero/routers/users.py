@@ -20,11 +20,6 @@ Session = Annotated[Session, Depends(get_session)]
 Current_user = Annotated[User, Depends(get_current_user)]
 
 
-@router.get('/', status_code=HTTPStatus.OK, response_model=Message)
-def read_root():
-    return {'message': 'Olá mundo!'}
-
-
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 async def create_user(user: UserSchema, session: Session):
 
