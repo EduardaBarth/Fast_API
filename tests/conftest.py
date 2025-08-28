@@ -2,6 +2,7 @@ import datetime
 from contextlib import contextmanager
 
 import pytest
+import factory
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import event
@@ -12,6 +13,7 @@ from fast_zero.fast_zero.database import get_session
 from fast_zero.fast_zero.app import app
 from fast_zero.fast_zero.models import User, table_registry
 from fast_zero.settings import Settings
+from fast_zero.fast_zero.security import get_password_hash
 
 
 @pytest.fixture
@@ -58,8 +60,8 @@ def mock_db_time():
     return _mock_db_time
 
 
-@pytest.fixture
-def client(session: Session):
+@pytest_asyncio.fixture
+async def client(session: AsyncSession):
     def get_session_override():
         return session
 
@@ -94,3 +96,40 @@ def token(client, user):
 @pytest.fixture
 def settings(session):
     return Settings()
+
+
+class UserFactory(factory.Factory):
+    class Meta:
+        model = User
+
+    username = factory.Sequence(lambda n: f'test{n}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@test.com')
+    password = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
+
+
+@pytest_asyncio.fixture
+async def user(session):
+    password = 'testtest'
+    user = UserFactory(password=get_password_hash(password))
+
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+
+    user.clean_password = password
+
+    return user
+
+
+@pytest_asyncio.fixture
+async def other_user(session):
+    password = 'testtest'
+    user = UserFactory(password=get_password_hash(password))
+
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+
+    user.clean_password = password
+
+    return user

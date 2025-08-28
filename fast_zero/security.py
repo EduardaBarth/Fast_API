@@ -6,7 +6,7 @@ from fast_zero.database import get_session
 from fast_zero.models import User
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from jwt import DecodeError, decode, encode
+from jwt import DecodeError, ExpiredSignatureError, decode, encode
 from jwt import encode
 from pwdlib import PasswordHash
 from pwdlib import PasswordHash
@@ -56,6 +56,9 @@ async def get_current_user(
             raise credentials_exception
 
     except DecodeError:
+        raise credentials_exception
+
+    except ExpiredSignatureError:
         raise credentials_exception
 
     user = await session.scalar(
